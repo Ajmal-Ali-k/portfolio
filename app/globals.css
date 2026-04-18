@@ -50,6 +50,21 @@ body {
 /* Selection */
 ::selection { background: #6366f1; color: white; }
 
+/* Emil: prefers-reduced-motion — keep opacity/color, remove movement */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .cursor, .cursor-follower { display: none; }
+}
+
+/* Emil: gate hover transforms behind pointer device check */
+@media (hover: none) {
+  [data-hover-scale] { transform: none !important; }
+}
+
 /* Noise texture overlay */
 body::before {
   content: '';
