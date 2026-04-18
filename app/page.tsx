@@ -1,9 +1,9 @@
 "use client";
 
-import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import {
-  Mail, Phone, MapPin, ExternalLink, Code2, Server,
+  Mail, Phone, MapPin, Code2, Server,
   Database, Cloud, ArrowDown, Briefcase, GraduationCap,
   ChevronRight, Sparkles, Zap, ArrowUpRight
 } from "lucide-react";
