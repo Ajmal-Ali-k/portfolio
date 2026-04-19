@@ -8,7 +8,7 @@ import { useGSAP } from "@gsap/react";
 import {
   Mail, Phone, MapPin, Code2, Server,
   Database, Cloud, ArrowDown, Briefcase, GraduationCap,
-  ChevronRight, Sparkles, Zap, ArrowUpRight, ExternalLink
+  ChevronRight, Sparkles, Zap, ExternalLink
 } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -127,13 +127,21 @@ const EXPERIENCE = [
   },
 ];
 
-// ─── Cursor ────────────────────────────────────────────────────────────────────
+// ─── Cursor (desktop only) ────────────────────────────────────────────────────
 
 function Cursor() {
   const dot = useRef<HTMLDivElement>(null);
   const ring = useRef<HTMLDivElement>(null);
+  const [show, setShow] = useState(false);
+
   useEffect(() => {
+    // Only show custom cursor on fine-pointer (mouse) devices
+    const mq = window.matchMedia("(pointer: fine)");
+    if (!mq.matches) return;
+    setShow(true);
+
     let mx = 0, my = 0, rx = 0, ry = 0;
+    let raf: number;
     const move = (e: MouseEvent) => {
       mx = e.clientX; my = e.clientY;
       if (dot.current) dot.current.style.transform = `translate(${mx - 4}px,${my - 4}px)`;
@@ -141,12 +149,14 @@ function Cursor() {
     const tick = () => {
       rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
       if (ring.current) ring.current.style.transform = `translate(${rx - 16}px,${ry - 16}px)`;
-      requestAnimationFrame(tick);
+      raf = requestAnimationFrame(tick);
     };
     window.addEventListener("mousemove", move);
-    tick();
-    return () => window.removeEventListener("mousemove", move);
+    raf = requestAnimationFrame(tick);
+    return () => { window.removeEventListener("mousemove", move); cancelAnimationFrame(raf); };
   }, []);
+
+  if (!show) return null;
   return (
     <>
       <div ref={dot} style={{ position: "fixed", top: 0, left: 0, width: 8, height: 8, borderRadius: "50%", background: "#6366f1", pointerEvents: "none", zIndex: 9999, mixBlendMode: "screen" }} />
@@ -248,10 +258,8 @@ function SplitHero({ text, delay = 0, className = "" }: { text: string; delay?: 
   useGSAP(() => {
     if (!ref.current) return;
     const chars = ref.current.querySelectorAll(".ch");
-    gsap.fromTo(chars,
-      { opacity: 0, y: 50, rotateX: -90, filter: "blur(8px)" },
-      { opacity: 1, y: 0, rotateX: 0, filter: "blur(0px)", duration: 0.65, ease: "power3.out", stagger: 0.04, delay }
-    );
+    gsap.set(chars, { opacity: 0, y: 50, rotateX: -90, filter: "blur(8px)" });
+    gsap.to(chars, { opacity: 1, y: 0, rotateX: 0, filter: "blur(0px)", duration: 0.65, ease: "power3.out", stagger: 0.04, delay });
   }, { scope: ref });
   return (
     <span ref={ref} className={className} style={{ perspective: "600px", display: "inline-block" }}>
@@ -268,17 +276,27 @@ function SplitHero({ text, delay = 0, className = "" }: { text: string; delay?: 
 
 function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => { setReady(true); }, []);
+
   useGSAP(() => {
-    if (!ref.current) return;
+    if (!ref.current || !ready) return;
     gsap.fromTo(ref.current,
-      { opacity: 0, y: 24, filter: "blur(4px)" },
+      { opacity: 0, y: 20, filter: "blur(4px)" },
       {
-        opacity: 1, y: 0, filter: "blur(0px)", duration: 0.65, ease: "power2.out", delay,
+        opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power2.out", delay,
         scrollTrigger: { trigger: ref.current, start: "top 88%", once: true },
       }
     );
-  }, { scope: ref });
-  return <div ref={ref} className={className}>{children}</div>;
+  }, { scope: ref, dependencies: [ready] });
+
+  // Before JS hydrates, show content normally to avoid invisible flash
+  return (
+    <div ref={ref} className={className} style={ready ? undefined : { opacity: 1 }}>
+      {children}
+    </div>
+  );
 }
 
 // ─── Navbar ────────────────────────────────────────────────────────────────────
